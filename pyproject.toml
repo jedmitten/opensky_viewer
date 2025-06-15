@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "icecold"
+version = "0.1.0"
+description = "A project using OpenSky API to fetch flight data."
+authors = ["Jed Mitten <jedmitten@example.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+opensky-api = { git = "https://github.com/openskynetwork/opensky-api.git", subdirectory = "python" }
+pandas = "*"
+toml = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
