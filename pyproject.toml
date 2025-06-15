@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "icecold"
+name = "opensky_viewer"
 version = "0.1.0"
 description = "A project using OpenSky API to fetch flight data."
 authors = ["Jed Mitten <jedmitten@example.com>"]
@@ -9,6 +9,7 @@ python = ">=3.10"
 opensky-api = { git = "https://github.com/openskynetwork/opensky-api.git", subdirectory = "python" }
 pandas = "*"
 toml = "*"
+pydantic = "^2.11.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

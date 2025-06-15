@@ -1,6 +1,6 @@
 import os
 import toml
-from icecold.models import BoundingBox
+from opensky_viewer.models import BoundingBox
 from pydantic import BaseModel
 from typing import List, Optional
 

@@ -3,7 +3,7 @@
 from opensky_api import OpenSkyApi
 from datetime import datetime
 import pandas as pd
-from icecold.config import read_config
+from opensky_viewer.config import read_config
 
 def fetch_flights(api, config):
     # Get states within bounding box
