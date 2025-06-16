@@ -1,0 +1,9 @@
+LATITUDE_MIN = 0.0
+LATITUDE_MAX = 90.0
+LONGITUDE_MIN = -10.0
+LONGITUDE_MAX = 110.0
+
+API_KEY = ""
+
+DATA_DIR = "data"
+DOWNSTREAM_URL = "https://example.com/api"
