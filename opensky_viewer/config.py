@@ -4,12 +4,15 @@ from opensky_viewer.models import BoundingBox
 from pydantic import BaseModel
 from typing import List, Optional
 
+DEFAULT_LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
 class Config(BaseModel):
     bounding_box: BoundingBox
     callsigns: Optional[List[str]] = None
     transmitter_ids: Optional[List[str]] = None
     api_key: Optional[str] = None
     data_directory: Optional[str] = None
+    logging_format: Optional[str] = None
 
 def read_config(file_path):
     with open(file_path, 'r') as f:
@@ -31,5 +34,6 @@ def read_config(file_path):
         callsigns=config.get('CALLSIGNS'),
         transmitter_ids=config.get('TRANSMITTER_IDS'),
         api_key=config.get('API_KEY'),
-        data_directory=data_directory
+        data_directory=data_directory,
+        logging_format=config.get('LOGGING_FORMAT', DEFAULT_LOGGING_FORMAT)
     )
