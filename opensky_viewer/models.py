@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+
 
 class BoundingBox(BaseModel):
     min_latitude: float  # Minimum latitude
@@ -8,4 +8,9 @@ class BoundingBox(BaseModel):
     max_longitude: float  # Maximum longitude
 
     def to_tuple(self):
-        return (self.min_latitude, self.max_latitude, self.min_longitude, self.max_longitude)
+        return (
+            self.min_latitude,
+            self.max_latitude,
+            self.min_longitude,
+            self.max_longitude,
+        )

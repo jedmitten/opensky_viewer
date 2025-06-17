@@ -1,37 +1,41 @@
 #!/usr/bin/env python3
 
-from opensky_api import OpenSkyApi
-from datetime import datetime
-import pandas as pd
-from opensky_viewer.config import read_config
+import json
 import logging
 import os
-import json
+import random
+import re
+import time
+from datetime import datetime, timedelta
+
+import pandas as pd
 import requests
+from opensky_api import OpenSkyApi
+
+from opensky_viewer.config import read_config
+
 
 # Configure logging
 def configure_logging(config):
     # Configure logging
     logging.basicConfig(level=logging.INFO, format=config.logging_format)
 
+
 def fetch_flights(api, config):
     logging.info("Fetching flight data within the specified bounding box.")
     # Get states within bounding box
-    states = api.get_states(
-        bbox=config.bounding_box.to_tuple()
-    )
+    states = api.get_states(bbox=config.bounding_box.to_tuple())
 
-    if states is None or not hasattr(states, 'states'):
+    if states is None or not hasattr(states, "states"):
         logging.warning("No flight data received or invalid response format.")
         return []
 
     # Convert state vectors to a list of dictionaries
-    flights = [
-        s.__dict__ for s in states.states if s is not None
-    ]
+    flights = [s.__dict__ for s in states.states if s is not None]
 
     logging.info(f"Found {len(flights)} aircraft in the specified area.")
     return flights
+
 
 def output_data(data, config, file_format="csv", send_downstream=False):
     if not data:
@@ -69,34 +73,79 @@ def output_data(data, config, file_format="csv", send_downstream=False):
             if response.status_code == 200:
                 logging.info("Data successfully sent to downstream service.")
             else:
-                logging.error(f"Failed to send data downstream. Status code: {response.status_code}, Response: {response.text}")
+                logging.error(
+                    f"Failed to send data downstream. Status code: {response.status_code}, Response: {response.text}"
+                )
         except Exception as e:
             logging.error(f"Error sending data downstream: {e}")
 
+
+def fetch_once(api, config):
+    return [fetch_flights(api, config)]
+
+
+def fetch_n_times(api, config, n, delay, random_backoff):
+    datasets = []
+    for i in range(n):
+        logging.info(f"Fetching data... ({i + 1}/{n})")
+        datasets.append(fetch_flights(api, config))
+        time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
+    return datasets
+
+
+def parse_time_input(time_input):
+    if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", time_input):
+        # ISO format (UTC)
+        return datetime.strptime(time_input, "%Y-%m-%dT%H:%M:%SZ")
+    else:
+        # Relative time format
+        match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", time_input)
+        if not match:
+            raise ValueError("Invalid time format")
+        hours, minutes, seconds = match.groups(default="0")
+        delta = timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds))
+        return datetime.utcnow() + delta
+
+
+def fetch_until(api, config, time_input, delay, random_backoff):
+    end_time = parse_time_input(time_input)
+    datasets = []
+    logging.info(f"Fetching data until {end_time} (UTC)...")
+    while datetime.utcnow() < end_time:
+        datasets.append(fetch_flights(api, config))
+        time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
+    return datasets
+
+
+def fetch_continuously(api, config, delay, random_backoff):
+    datasets = []
+    logging.info("Fetching data continuously...")
+    try:
+        while True:
+            datasets.append(fetch_flights(api, config))
+            time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
+    except KeyboardInterrupt:
+        logging.info("Continuous fetch stopped by user.")
+    return datasets
+
+
+def handle_datasets(datasets, config):
+    dataframes = []
+    for i, data in enumerate(datasets):
+        df = pd.DataFrame(data)
+        dataframes.append(df)
+        output_data(data, config, file_format="csv")
+    return dataframes
+
+
 def main():
     # Read configuration from config file
-    config_path = "config/local.toml"
-    config = read_config(config_path)
-
-    # Configure logging with the config
-    configure_logging(config)
-
-    logging.info("Creating OpenSky API instance.")
-    # Create OpenSky API instance
+    config = read_config()
     api = OpenSkyApi()
 
-    logging.info("Starting flight data fetch process.")
-    # Fetch flights using the configuration
-    flights = fetch_flights(api, config)
-
-    # Convert to pandas DataFrame for easier handling
-    df = pd.DataFrame(flights)
-    logging.info("Displaying flight data.")
-    print(df)
-
-    # Output data to file and downstream service
-    output_data(flights, config, file_format="csv", send_downstream=True)
-    output_data(flights, config, file_format="json", send_downstream=False)
+    # Example usage of fetch functions
+    datasets = fetch_once(api, config)
+    handle_datasets(datasets, config)
 
 
 if __name__ == "__main__":
