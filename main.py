@@ -102,7 +102,12 @@ def fetch_until(api, config, time_input, delay, random_backoff):
         data = fetch_flights(api, config)
         datasets.append(data)
         output_data(data, config, file_format=config.output_format or "csv")  # Write after each fetch
-        time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
+        # Calculate next sleep duration and check if it would go past end_time
+        sleep_time = delay + (random.uniform(0, delay) if random_backoff else 0)
+        next_time = datetime.now(tz=pytz.UTC) + timedelta(seconds=sleep_time)
+        if next_time >= end_time:
+            break  # Avoid sleeping if next fetch would be after end_time
+        time.sleep(sleep_time)
     return datasets
 
 
