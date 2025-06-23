@@ -22,7 +22,7 @@ class Config(BaseModel):
     api_key: Optional[str] = None
     data_directory: Optional[str] = None
     logging_format: Optional[str] = None
-    output_formats: Set[OutputFormat] = {OutputFormat.CSV}  # Default to CSV only
+    output_format: Set[OutputFormat] = {OutputFormat.CSV}  # Default to CSV only
 
 
 def read_config(file_path: str = "./config/local.toml") -> Config:

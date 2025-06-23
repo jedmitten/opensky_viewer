@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import logging
 import os
@@ -70,6 +69,8 @@ def fetch_n_times(api, config, n, delay, random_backoff):
     for i in range(n):
         logging.info(f"Fetching data... ({i + 1}/{n})")
         datasets.append(fetch_flights(api, config))
+        logging.debug(f"Fetched {len(datasets[-1])} flights.")
+        logging.debug(f"Sleeping for {delay} seconds.")
         time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
     return datasets
 
@@ -116,6 +117,7 @@ def handle_datasets(datasets):
 
 
 def main(api: OpenSkyApi, config: Config):
+    configure_logging(config)
     logging.info("Starting flight data fetch process.")
 
     # Fetch flights using the configuration
@@ -133,8 +135,7 @@ def main(api: OpenSkyApi, config: Config):
     print(df)
 
     # Output data to file and downstream service
-    for format in config.output_formats:
-        output_data(flights, config, file_format=format)
+    output_data(flights, config, file_format=config.output_format or "csv")
 
 
 if __name__ == "__main__":
