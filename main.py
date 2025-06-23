@@ -9,10 +9,9 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
-import requests
 from opensky_api import OpenSkyApi
 
-from opensky_viewer.config import read_config
+from opensky_viewer.config import Config, read_config
 
 
 # Configure logging
@@ -37,7 +36,7 @@ def fetch_flights(api, config):
     return flights
 
 
-def output_data(data, config, file_format="csv", send_downstream=False):
+def output_data(data, config, file_format="csv"):
     if not data:
         logging.warning("No data to output.")
         return
@@ -60,24 +59,6 @@ def output_data(data, config, file_format="csv", send_downstream=False):
         logging.info(f"Flight data saved to {file_path} as JSON.")
     else:
         logging.error(f"Unsupported file format: {file_format}")
-
-    # Send data to downstream service if enabled
-    if send_downstream:
-        downstream_url = config.downstream_url
-        if not downstream_url:
-            logging.error("Downstream URL is not configured.")
-            return
-
-        try:
-            response = requests.post(downstream_url, json=data)
-            if response.status_code == 200:
-                logging.info("Data successfully sent to downstream service.")
-            else:
-                logging.error(
-                    f"Failed to send data downstream. Status code: {response.status_code}, Response: {response.text}"
-                )
-        except Exception as e:
-            logging.error(f"Error sending data downstream: {e}")
 
 
 def fetch_once(api, config):
@@ -129,24 +110,34 @@ def fetch_continuously(api, config, delay, random_backoff):
     return datasets
 
 
-def handle_datasets(datasets, config):
-    dataframes = []
-    for i, data in enumerate(datasets):
-        df = pd.DataFrame(data)
-        dataframes.append(df)
-        output_data(data, config, file_format="csv")
-    return dataframes
+def handle_datasets(datasets):
+    """Convert raw datasets into pandas DataFrames."""
+    return [pd.DataFrame(data) for data in datasets]
 
 
-def main():
-    # Read configuration from config file
-    config = read_config()
-    api = OpenSkyApi()
+def main(api: OpenSkyApi, config: Config):
+    logging.info("Starting flight data fetch process.")
 
-    # Example usage of fetch functions
-    datasets = fetch_once(api, config)
-    handle_datasets(datasets, config)
+    # Fetch flights using the configuration
+    flights = fetch_n_times(
+        api=api,
+        config=config,
+        n=10,  # Number of fetches
+        delay=(60 * 3),  # Delay between fetches in seconds
+        random_backoff=False,  # Use random backoff
+    )
+
+    # Convert to pandas DataFrame for easier handling
+    df = pd.DataFrame(flights)
+    logging.info("Displaying flight data.")
+    print(df)
+
+    # Output data to file and downstream service
+    for format in config.output_formats:
+        output_data(flights, config, file_format=format)
 
 
 if __name__ == "__main__":
-    main()
+    config = read_config("config/local.toml")
+    api = OpenSkyApi()
+    main(api, config)

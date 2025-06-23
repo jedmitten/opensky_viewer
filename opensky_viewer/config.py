@@ -1,5 +1,6 @@
 import os
-from typing import List, Optional
+from enum import Enum
+from typing import List, Optional, Set
 
 import toml
 from pydantic import BaseModel
@@ -9,6 +10,11 @@ from opensky_viewer.models import BoundingBox
 DEFAULT_LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
+class OutputFormat(str, Enum):
+    CSV = "csv"
+    JSON = "json"
+
+
 class Config(BaseModel):
     bounding_box: BoundingBox
     callsigns: Optional[List[str]] = None
@@ -16,6 +22,7 @@ class Config(BaseModel):
     api_key: Optional[str] = None
     data_directory: Optional[str] = None
     logging_format: Optional[str] = None
+    output_formats: Set[OutputFormat] = {OutputFormat.CSV}  # Default to CSV only
 
 
 def read_config(file_path: str = "./config/local.toml") -> Config:
@@ -40,4 +47,5 @@ def read_config(file_path: str = "./config/local.toml") -> Config:
         api_key=config.get("API_KEY"),
         data_directory=data_directory,
         logging_format=config.get("LOGGING_FORMAT", DEFAULT_LOGGING_FORMAT),
+        output_formats=set(config.get("OUTPUT_FORMATS", {OutputFormat.CSV})),
     )
