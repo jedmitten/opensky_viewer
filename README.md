@@ -43,16 +43,58 @@ The project provides several fetch functions to retrieve flight data from the Op
 
 Each function returns a list of datasets, which can then be converted to DataFrames and saved or
 
+## Configuration
+
+All runtime options are set in the `config/local.toml` file.  
+You can copy and edit `config/example.toml` as a starting point:
+
+```sh
+cp config/example.toml config/local.toml
+```
+
+**Key configuration fields:**
+
+- `LATITUDE_MIN`, `LONGITUDE_MIN`, `LATITUDE_MAX`, `LONGITUDE_MAX`:  
+  Define the bounding box for the area of interest.
+- `DATA_DIRECTORY`:  
+  Directory where output files will be saved (default: `./data`).
+- `OUTPUT_FORMAT`:  
+  Output file format, either `"csv"` or `"json"` (default: `"csv"`).
+- `LOGGING_FORMAT`:  
+  (Optional) Format for log messages.
+- `CALLSIGNS`:  
+  (Optional) List of callsigns to filter (uncomment and edit as needed).
+- `TRANSMITTER_IDS`:  
+  (Optional) List of transmitter IDs to filter (uncomment and edit as needed).
+- `API_KEY`:  
+  (Optional) API key for OpenSky (leave blank or remove if not needed).
+
+**Example:**
+```toml
+LATITUDE_MIN = 32.0
+LONGITUDE_MIN = -118.0
+LATITUDE_MAX = 33.0
+LONGITUDE_MAX = -117.0
+DATA_DIRECTORY = "./data"
+OUTPUT_FORMAT = "csv"
+LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+# API_KEY = ""
+```
+
+**Note:**  
+- If a field is not set, the application will use a sensible default (e.g., CSV for output format).
+- Make sure the `DATA_DIRECTORY` exists or let the application create it on first run.
+
 ## Installation
 
 This project uses [Poetry](https://python-poetry.org/) for dependency management.
 
-1. **Install Poetry** (if you don’t have it):
+1. **Install Poetry** (if you don't have it):
     ```sh
     curl -sSL https://install.python-poetry.org | python3 -
     ```
 
-2. **Clone this repository** (if you haven’t already):
+2. **Clone this repository** (if you haven't already):
     ```sh
     git clone <relative/path/to/opensky_viewer>
     cd opensky_viewer
