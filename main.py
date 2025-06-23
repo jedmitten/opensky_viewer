@@ -46,7 +46,9 @@ def output_data(data, config, suffix: str = None, file_format="csv"):
 
     # Generate a timestamped filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_path = os.path.join(data_directory, f"flights_data{'_' + suffix if suffix else ''}_{timestamp}.{file_format}")
+    file_path = os.path.join(
+        data_directory, f"flights_data{'_' + suffix if suffix else ''}_{timestamp}.{file_format.value}"
+    )
 
     # Save data to file
     if file_format == "csv":
