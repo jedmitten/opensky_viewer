@@ -42,3 +42,76 @@ The project provides several fetch functions to retrieve flight data from the Op
 - **`fetch_continuously`**: Use for ongoing monitoring; stops only when the process is interrupted.
 
 Each function returns a list of datasets, which can then be converted to DataFrames and saved or
+
+## Installation
+
+This project uses [Poetry](https://python-poetry.org/) for dependency management.
+
+1. **Install Poetry** (if you don’t have it):
+    ```sh
+    curl -sSL https://install.python-poetry.org | python3 -
+    ```
+
+2. **Clone this repository** (if you haven’t already):
+    ```sh
+    git clone <relative/path/to/opensky_viewer>
+    cd opensky_viewer
+    ```
+
+3. **Install dependencies**:
+    ```sh
+    poetry install
+    ```
+
+4. **(Optional) Add this repo as a dependency from another local project**:
+    ```sh
+    poetry add ../opensky_viewer
+    ```
+
+5. **Activate the Poetry shell**:
+    ```sh
+    poetry shell
+    ```
+
+6. **Run the main script**:
+    ```sh
+    python -m opensky_viewer.main
+    ```
+
+Make sure to configure your settings in `config/local.toml`
+
+## Data Directory Usage
+
+All fetched flight data is saved in the `data` directory (by default `opensky_viewer/data/`).  
+Each fetch operation writes a new file with a timestamp in its name, in either CSV or JSON format depending on your configuration.
+
+- **Location:**  
+  The directory can be configured in your `config/local.toml` file with the `data_directory` option.
+- **File Naming:**  
+  Files are named like `flights_data_<timestamp>.csv` or `flights_data_<timestamp>.json`.
+- **Purpose:**  
+  This directory serves as a persistent store for all raw flight data you collect, making it easy to analyze or compare datasets later.
+
+**Example:**
+```
+opensky_viewer/
+  data/
+    flights_data_20250622_210254.csv
+    flights_data_20250622_210554.csv
+    ...
+```
+
+Make sure the directory exists or is correctly set in your config before running fetch commands.
+
+## Output: Main vs. Individual Fetch Results
+
+- **Individual Fetch Output:**  
+  After each fetch operation (whether using `fetch_once`, `fetch_n_times`, `fetch_until`, or `fetch_continuously`), the results are immediately written to a file in the `data` directory. Each file is timestamped and contains only the results from that specific fetch. This ensures you have a record of every individual data collection event.
+
+- **Main Output (Summary/Analysis):**  
+  After all fetches are complete, the main script can aggregate or analyze the collected datasets. For example, it may combine all fetched data into a single pandas DataFrame for further processing, display, or comparison. This summary or analysis is typically shown in the console or used for downstream analysis, but is not automatically written to a file unless you add that logic.
+
+**In summary:**  
+- Every fetch writes its own file in the `data` directory.
+- The main output is an in-memory aggregation or analysis of all fetches, useful for further
+

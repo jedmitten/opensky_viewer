@@ -8,15 +8,15 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
+import pytz
 from opensky_api import OpenSkyApi
 
 from opensky_viewer.config import Config, read_config
 
 
-# Configure logging
 def configure_logging(config):
     # Configure logging
-    logging.basicConfig(level=logging.INFO, format=config.logging_format)
+    logging.basicConfig(level=logging.DEBUG, format=config.logging_format)
 
 
 def fetch_flights(api, config):
@@ -35,7 +35,7 @@ def fetch_flights(api, config):
     return flights
 
 
-def output_data(data, config, file_format="csv"):
+def output_data(data, config, suffix: str = None, file_format="csv"):
     if not data:
         logging.warning("No data to output.")
         return
@@ -46,7 +46,7 @@ def output_data(data, config, file_format="csv"):
 
     # Generate a timestamped filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_path = os.path.join(data_directory, f"flights_data_{timestamp}.{file_format}")
+    file_path = os.path.join(data_directory, f"flights_data{'_' + suffix if suffix else ''}_{timestamp}.{file_format}")
 
     # Save data to file
     if file_format == "csv":
@@ -61,15 +61,19 @@ def output_data(data, config, file_format="csv"):
 
 
 def fetch_once(api, config):
-    return [fetch_flights(api, config)]
+    data = fetch_flights(api, config)
+    output_data(data, config, file_format=config.output_format or "csv")
+    return [data]
 
 
 def fetch_n_times(api, config, n, delay, random_backoff):
     datasets = []
     for i in range(n):
         logging.info(f"Fetching data... ({i + 1}/{n})")
-        datasets.append(fetch_flights(api, config))
-        logging.debug(f"Fetched {len(datasets[-1])} flights.")
+        data = fetch_flights(api, config)
+        datasets.append(data)
+        logging.debug(f"Fetched {len(data)} flights.")
+        output_data(data, config, file_format=config.output_format or "csv")  # Write after each fetch
         logging.debug(f"Sleeping for {delay} seconds.")
         time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
     return datasets
@@ -86,15 +90,17 @@ def parse_time_input(time_input):
             raise ValueError("Invalid time format")
         hours, minutes, seconds = match.groups(default="0")
         delta = timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds))
-        return datetime.utcnow() + delta
+        return datetime.now(tz=pytz.UTC) + delta
 
 
 def fetch_until(api, config, time_input, delay, random_backoff):
     end_time = parse_time_input(time_input)
     datasets = []
     logging.info(f"Fetching data until {end_time} (UTC)...")
-    while datetime.utcnow() < end_time:
-        datasets.append(fetch_flights(api, config))
+    while datetime.now(tz=pytz.UTC) < end_time:
+        data = fetch_flights(api, config)
+        datasets.append(data)
+        output_data(data, config, file_format=config.output_format or "csv")  # Write after each fetch
         time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
     return datasets
 
@@ -104,7 +110,9 @@ def fetch_continuously(api, config, delay, random_backoff):
     logging.info("Fetching data continuously...")
     try:
         while True:
-            datasets.append(fetch_flights(api, config))
+            data = fetch_flights(api, config)
+            datasets.append(data)
+            output_data(data, config, file_format=config.output_format or "csv")  # Write after each fetch
             time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
     except KeyboardInterrupt:
         logging.info("Continuous fetch stopped by user.")
@@ -135,7 +143,7 @@ def main(api: OpenSkyApi, config: Config):
     print(df)
 
     # Output data to file and downstream service
-    output_data(flights, config, file_format=config.output_format or "csv")
+    output_data(flights, config, suffix="all", file_format=config.output_format or "csv")
 
 
 if __name__ == "__main__":
