@@ -155,5 +155,5 @@ Make sure the directory exists or is correctly set in your config before running
 
 **In summary:**  
 - Every fetch writes its own file in the `data` directory.
-- The main output is an in-memory aggregation or analysis of all fetches, useful for further
+- The main output is an in-memory aggregation or analysis of all fetches, useful for further downstream inputs
 
