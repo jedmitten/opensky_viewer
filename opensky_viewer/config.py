@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import List, Optional, Set
+from typing import List, Optional
 
 import toml
 from pydantic import BaseModel
@@ -22,7 +22,7 @@ class Config(BaseModel):
     api_key: Optional[str] = None
     data_directory: Optional[str] = None
     logging_format: Optional[str] = None
-    output_format: Set[OutputFormat] = {OutputFormat.CSV}  # Default to CSV only
+    output_format: OutputFormat = OutputFormat.CSV  # Default to CSV only
 
 
 def read_config(file_path: str = "./config/local.toml") -> Config:
@@ -40,6 +40,10 @@ def read_config(file_path: str = "./config/local.toml") -> Config:
     if data_directory and not os.path.exists(data_directory):
         os.makedirs(data_directory)
 
+    # Read output_format from config, default to CSV
+    output_format_str = config.get("OUTPUT_FORMAT", "csv")
+    output_format = OutputFormat(output_format_str.lower())
+
     return Config(
         bounding_box=bounding_box,
         callsigns=config.get("CALLSIGNS"),
@@ -47,5 +51,5 @@ def read_config(file_path: str = "./config/local.toml") -> Config:
         api_key=config.get("API_KEY"),
         data_directory=data_directory,
         logging_format=config.get("LOGGING_FORMAT", DEFAULT_LOGGING_FORMAT),
-        output_formats=set(config.get("OUTPUT_FORMATS", {OutputFormat.CSV})),
+        output_format=output_format,
     )
