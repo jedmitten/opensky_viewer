@@ -74,8 +74,9 @@ def fetch_n_times(api, config, n, delay, random_backoff):
         datasets.append(data)
         logging.debug(f"Fetched {len(data)} flights.")
         output_data(data, config, file_format=config.output_format or "csv")  # Write after each fetch
-        logging.debug(f"Sleeping for {delay} seconds.")
-        time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
+        if i < n - 1:  # Avoid sleeping after the last fetch
+            logging.debug(f"Sleeping for {delay} seconds.")
+            time.sleep(delay + (random.uniform(0, delay) if random_backoff else 0))
     return datasets
 
 
