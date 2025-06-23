@@ -1,9 +1,17 @@
-LATITUDE_MIN = 0.0
-LATITUDE_MAX = 90.0
-LONGITUDE_MIN = -10.0
-LONGITUDE_MAX = 110.0
+# Bounding box for the area of interest
+LATITUDE_MIN = 32.0
+LONGITUDE_MIN = -118.0
+LATITUDE_MAX = 33.0
+LONGITUDE_MAX = -117.0
 
-API_KEY = ""
+# Optional: API key for OpenSky (leave blank or remove if not needed)
+# API_KEY = ""
 
-DATA_DIR = "data"
-DOWNSTREAM_URL = "https://example.com/api"
+# Directory to store output data files
+DATA_DIRECTORY = "./data"
+
+# Logging format (optional)
+LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Output format: "csv" or "json"
+# OUTPUT_FORMAT = "csv"
