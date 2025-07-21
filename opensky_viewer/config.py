@@ -5,9 +5,10 @@ from typing import List, Optional
 import toml
 from pydantic import BaseModel
 
+from opensky_viewer.logging import configure_logger
 from opensky_viewer.models import BoundingBox
 
-DEFAULT_LOGGING_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+logger = configure_logger()
 
 
 class OutputFormat(str, Enum):
@@ -21,11 +22,11 @@ class Config(BaseModel):
     transmitter_ids: Optional[List[str]] = None
     api_key: Optional[str] = None
     data_directory: Optional[str] = None
-    logging_format: Optional[str] = None
     output_format: OutputFormat = OutputFormat.CSV  # Default to CSV only
 
 
 def read_config(file_path: str = "./config/local.toml") -> Config:
+    logger.info(f"Reading configuration from {file_path}")
     with open(file_path, "r") as f:
         config = toml.load(f)
 
@@ -50,6 +51,5 @@ def read_config(file_path: str = "./config/local.toml") -> Config:
         transmitter_ids=config.get("TRANSMITTER_IDS"),
         api_key=config.get("API_KEY"),
         data_directory=data_directory,
-        logging_format=config.get("LOGGING_FORMAT", DEFAULT_LOGGING_FORMAT),
         output_format=output_format,
     )
